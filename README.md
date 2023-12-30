@@ -1,6 +1,6 @@
 # 3k-tiny-game
 
-![1](1.png "sample")
+这个depo用于在Wikidot部署，不要直接对它提交东西，开发还是在Andy那里
 
 [Play](https://andyblocker.github.io/3k-tiny-game/main.html)
 
