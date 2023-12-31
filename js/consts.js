@@ -59,9 +59,8 @@ function parseUrl(){
             else if (key == "iteration-2") {
                 ITERATION_2_LINK = value;
             }
-            else if (key == "file-path") {
+            else if (key == "img-path") {
                 IMAGE_PATH = value;
-                JSON_PATH = value;
             }
         }
     }
@@ -128,7 +127,7 @@ let specialCardsData = {
         hasExtraDesc: false,
         desc: "",
         descNoJ: "",
-        logEvents: ["4454", "4455", "1922", "1775", "812", "765", "2297", "1061", "1818", "1819", "1296", "3000-love"]
+        logEvents: ["4454", "4455", "1922", "1775", "812", "201", "1733", "1061", "1818", "1819", "1296", "3000-love"]
     },
     "006J": {
         hasExtraDesc: false,
@@ -146,5 +145,5 @@ var _luckyDrawRemaining, _luckyDrawGuaranteeOccurance, _prizeObtained;
 
 var _dragElement, _dragStartTime;
 let _dragging = false;
-let _dragValue = '';
+let _dragCardId = '';
 let _dragOffset = { X: 0, Y: 0 };
