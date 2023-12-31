@@ -26,6 +26,7 @@ const CLINICAL_COLOR = "#FFFFFF";
 const DEFAULT_CONTINUE_TEXT = "前往下一事件";
 let TYPE_ANIM_SPEED = 100;
 let ITERATION_2_LINK = "";
+const DRAG_THRESHOLD = 150;
 
 const PURSE_CARD_ID = "purse";
 const PET_CARD_ID = "pet";
@@ -76,6 +77,8 @@ const cardContainer = document.querySelector('.card-container');
 const lootContainer = document.getElementById('loots');
 const hintText1 = document.getElementById('hintText1');
 const hintText2 = document.getElementById('hintText2');
+const cal1 = document.querySelector(".cal-1");
+const cal2 = document.querySelector(".cal-2");
 
 var maxCardsToShow = 4;
 
@@ -140,3 +143,8 @@ let specialCardsData = {
 
 let _lootToPick = 0;
 var _luckyDrawRemaining, _luckyDrawGuaranteeOccurance, _prizeObtained;
+
+var _dragElement, _dragStartTime;
+let _dragging = false;
+let _dragValue = '';
+let _dragOffset = { X: 0, Y: 0 };

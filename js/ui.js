@@ -63,6 +63,110 @@ function prefetchNextImg(event, eventId) {
     }
 }
 
+let _lastTouchCoords = { x: 0, y: 0 };
+
+function nullHandler(e) {
+    e.preventDefault();
+}
+
+function getEventCoordinates(e) {
+    if (e.type.startsWith('touch')) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else {
+        return { x: e.pageX, y: e.pageY };
+    }
+}
+
+function updateLastTouchClientCoords(e){
+    if (e.type.startsWith('touch')) {
+        _lastTouchCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY }; // 更新触摸坐标
+    }
+}
+
+function initCardDrag() {
+    function moveHandler(e) {
+        if (!_dragging || !_dragElement) {
+            return;
+        }
+        const coords = getEventCoordinates(e);
+        updateLastTouchClientCoords(e);
+        _dragElement.style.left = coords.x - _dragOffset.X + 'px';
+        _dragElement.style.top = coords.y - _dragOffset.Y + 'px';
+    }
+
+    function endHandler(e) {
+        if (!_dragging || !_dragElement) {
+            return;
+        }
+
+        const coords = e.type === 'touchend' ? 
+            { x: _lastTouchCoords.x, y: _lastTouchCoords.y } : 
+            { x: e.clientX, y: e.clientY };
+
+        const dropTarget = document.elementFromPoint(coords.x, coords.y);
+
+        if (dropTarget.type == 'text') {
+            dropTarget.value = _dragValue;
+            if (!dropTarget.classList.contains('input-box')) {
+                calculate();
+            }   
+        }
+        else {
+            console.log("not in");
+            console.log(dropTarget)
+            console.log(coords);
+        }
+
+        _dragging = false;
+        _dragElement.parentNode.removeChild(_dragElement);
+        _dragElement.remove();
+        document.removeEventListener('selectstart', nullHandler);
+        _dragOffset = { X: 0, Y: 0 };
+        _dragElement = undefined;
+        _dragValue = '';
+    }
+
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', endHandler);
+    document.addEventListener('touchmove', moveHandler);
+    document.addEventListener('touchend', endHandler);
+}
+
+function registerDraggable(element, value) {
+    function startHandler(e) {
+        e.preventDefault();
+        const coords = getEventCoordinates(e);
+        updateLastTouchClientCoords(e);
+
+        const scrollX = window.scrollX || document.documentElement.scrollLeft;
+        const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+        const offsetX = e.type.startsWith('touch') ? coords.x - (element.getBoundingClientRect().left + scrollX) : e.offsetX;
+        const offsetY = e.type.startsWith('touch') ? coords.y - (element.getBoundingClientRect().top + scrollY) : e.offsetY;
+
+        const dragElement = element.cloneNode(true);
+        dragElement.id = element.id + '-drag';
+        dragElement.display = 'block';
+        dragElement.classList.add('card-drag');
+        dragElement.style.position = 'absolute';
+        dragElement.style.left = (coords.x - offsetX) + 'px';
+        dragElement.style.top = (coords.y - offsetY) + 'px';
+        _dragOffset.X = offsetX;
+        _dragOffset.Y = offsetY;
+        document.querySelector('.card-wrapper').appendChild(dragElement);
+        console.log(dragElement);
+        _dragElement = dragElement;
+        _dragging = true;
+        _dragValue = value;
+        _dragStartTime = e.timeStamp;
+        document.addEventListener('selectstart', nullHandler);
+    }
+
+    element.addEventListener('mousedown', startHandler);
+    element.addEventListener('touchstart', startHandler);
+}
+
+
 function popAllChildElement(parent) {
     let childs = parent.childNodes;
     for (var i = childs.length - 1; i >= 0; i--) {
@@ -136,7 +240,8 @@ function setupCardElement(cardDiv, cardId, options, cardTitle, cardImage, cardNa
     options.color = options.color ? options.color : getColor(card, DATA_TYPES.Card);
     cardDiv.style.borderColor = options.color;
 
-    cardTitle.textContent = getCardTitle(cardId);
+    const title = getCardTitle(cardId)
+    cardTitle.textContent = title;
     cardTitle.style.color = options.color;
 
     if (!branch.d) {
@@ -148,9 +253,14 @@ function setupCardElement(cardDiv, cardId, options, cardTitle, cardImage, cardNa
         cardImage.style.display = "none";
     }
 
-    cardDiv.onclick = () => {
-        previewCard(cardId, options);
-    }
+    clickHandler = (e) => {
+        if (e.timeStamp - _dragStartTime < DRAG_THRESHOLD) {
+            previewCard(cardId, options);
+        }
+    }  
+    cardDiv.onclick = clickHandler;
+    cardDiv.addEventListener('touchend', clickHandler);
+    registerDraggable(cardDiv, title);
 }
 
 // 替换卡牌
@@ -338,6 +448,9 @@ function setupInputArea(event, eventId, color) {
     const cal2 = document.querySelector(".cal-2");
     const calc = document.querySelector('.calculater');
 
+    setCalculaterVisibility(!event.hideCalculater);
+    cal1.value = getCal1DefaultText(event, eventId);
+
     for (const e of [inputBox, cal1, cal2, calc]) { e.style.borderColor = color; };
     setTextAndBorderColor(goButton, color);
     document.querySelector(".plus").style.color = color;
@@ -348,11 +461,10 @@ function setupInputArea(event, eventId, color) {
 
     goButton.onclick = () => {
         const input = inputBox.value;
-        getUseResult(input, event, eventId);
         inputBox.value = "";
-
-        cal1.value = null;
+        cal1.value = getCal1DefaultText(event, eventId);
         cal2.value = null;
+        getUseResult(input, event, eventId);
     }
 }
 
@@ -508,6 +620,22 @@ function displayRAISA(title, description) {
     ===== 计算器相关 =====
 */
 
+function setCalculaterVisibility( visibility ) {
+    document.querySelector('.calculater-container').style.display = visibility ? "flex" : "none";
+    document.querySelector('.calculater').style.display = visibility ? "initial" : "none";
+}
+
+function calculate() {
+    var calcRes = parseInt(cal1.value) + parseInt(cal2.value);
+    if (!isNaN(calcRes)) {
+        const regExp = /J$/;
+        if (regExp.test(cal1.value) || regExp.test(cal2.value)){
+            calcRes += 'J';
+        }
+        document.getElementById("input-box").value = calcRes;
+    }
+}
+
 function deployCalculater() {
     var calc = document.querySelector(".calculater");
     calc.onclick = () => {
@@ -516,19 +644,8 @@ function deployCalculater() {
         // const classList = document.querySelector(".calculater-container").classList;
         // classList.contains("display") ? classList.remove("display") : classList.add("display");
     };
-
-    const cal1 = document.querySelector(".cal-1");
-    const cal2 = document.querySelector(".cal-2");
     cal1.onkeyup = calculate;
     cal2.onkeyup = calculate;
-
-    function calculate() {
-        var calcRes = parseInt(cal1.value) + parseInt(cal2.value);
-        if (!isNaN(calcRes)) {
-            document.getElementById("input-box").value = calcRes;
-        }
-    }
-
 }
 
 function goNODREAM() {

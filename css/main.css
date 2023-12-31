@@ -241,6 +241,7 @@ button:focus {
   border-radius: 10px;
   font-size: 1em;
   width: calc(80% - 3em);
+  text-transform: uppercase;
 }
 
 .calculater-container {
@@ -260,6 +261,7 @@ button:focus {
   border-radius: 10px;
   font-size: 1em;
   width: calc((100% - 3em) / 2);
+  text-transform: uppercase;
 }
 
 .equal,
@@ -484,6 +486,13 @@ button:focus {
   width: 100%;
 }
 
+.card-drag {
+  position: absolute;
+  z-index: 100;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .no-dream .main {
   border-radius: 0;
   background-color: #161616;
@@ -552,6 +561,7 @@ button:focus {
   width: 5vw;
   text-align: center;
   border: none;
+  touch-action: manipulation;
 }
 
 .nav-button img {

@@ -2,6 +2,18 @@
     ===== 有关事件&提示的接口 =====
 */
 
+function getCal1DefaultText(event, eventId) {
+    if (!event) {
+        return '';
+    }
+    else if (event.cal1 || event.cal1 == ''){
+        return event.cal1;
+    }
+    else {
+        return event.displayID ? event.displayID : eventId;
+    }
+}
+
 function getEventType(event) {
     if (event == undefined || !event.type) {
         return EVENT_TYPES.Output;
@@ -85,6 +97,13 @@ function startEvent(eventId, options) {
     const previousEventId = options.previousEvent ? options.previousEvent : currentEventId;
     const event = allEvents[eventId];
 
+    // clear all drags
+    const dragElements = document.querySelectorAll('[class*="-drag"]');
+
+    dragElements.forEach(element => {
+        element.parentNode.removeChild(element);
+    });
+
     // Start Event
     completedEvents.push(previousEventId);
     currentEventId = eventId;
@@ -129,7 +148,7 @@ function startEvent(eventId, options) {
         document.getElementsByClassName('text-container')[0].style.display = 'initial';
         document.querySelector('.text-container').style.height = 'auto';
     }
-
+    
     // update event img
     if (!branch.d && event && event.img) { // with img
         document.querySelector('.img-wrapper').src = IMAGE_PATH + event.img;
